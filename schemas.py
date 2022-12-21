@@ -1,5 +1,12 @@
 from marshmallow import Schema, fields
 
+class PlainCommentSchema(Schema):
+    id = fields.Int()
+    commentText = fields.Str()
+
+class CommentSchema(PlainCommentSchema):
+    authorId = fields.Int()
+    themeId = fields.Int()
 
 class PlainUserSchema(Schema):
     id = fields.Int(dump_only=True)
@@ -10,11 +17,11 @@ class PlainUserSchema(Schema):
     country = fields.Str(required=True)
     phoneNumber = fields.Str(required=True)
     email = fields.Str(required=True)
-    password = fields.Str(required=True)
+    password = fields.Str(required=True, load_only=True)
 
 
 class UpdateUser(Schema):
-    id = fields.Int(required=True)
+    id = fields.Int(required=True, load_only=True)
     firstName = fields.Str()
     lastName = fields.Str()
     address = fields.Str()
@@ -22,13 +29,20 @@ class UpdateUser(Schema):
     country = fields.Str()
     phoneNumber = fields.Str()
 
+
 class PlainThemeSchema(Schema):
     id = fields.Int(dump_only=True)
     title = fields.Str(required=True)
+
 
 class ThemeSchema(PlainThemeSchema):
     user_id = fields.Int(required=True, load_only=True)
     user = fields.Nested(PlainUserSchema(), dump_only=True)
 
+
 class UserSchema(PlainUserSchema):
     themes = fields.List(fields.Nested(PlainThemeSchema()), dump_only=True)
+
+class UserLoginSchema(Schema):
+    email = fields.String(required=True)
+    password = fields.String(required=True)

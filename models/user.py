@@ -12,5 +12,6 @@ class UserModel(db.Model):
     country = db.Column(db.String(30), unique=False, nullable=False)
     phoneNumber = db.Column(db.String(30), unique=False, nullable=False)
     email = db.Column(db.String(30), unique=True, nullable=False)
-    password = db.Column(db.String(30), unique=False, nullable=False)
+    password = db.Column(db.String(90), unique=True, nullable=False)
     themes = db.relationship("ThemeModel", back_populates="user", lazy="dynamic")
+    comments = db.relationship("CommentModel", back_populates="user", lazy="dynamic")
