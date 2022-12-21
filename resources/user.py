@@ -1,16 +1,20 @@
-import uuid
-from flask import request
+import random
+from sqlalchemy.exc import SQLAlchemyError
+from loggerFactory import get_module_logger
+from db import db
+from models import UserModel
 from flask.views import MethodView
 from flask_smorest import Blueprint, abort
-from db import users
-from schemas import UserRegister
+from schemas import PlainUserSchema, UserSchema
 
 blp = Blueprint("users", __name__, description="Operations on users")
+logger = get_module_logger(__name__)
 
 @blp.route("/app/<string:user_id>")
 class User(MethodView):
     def get(self, user_id):
-        return users[user_id]
+        logger.info(user_id)
+        return "ok"
 
     def delete(self):
         pass
@@ -18,11 +22,16 @@ class User(MethodView):
 @blp.route("/user/register")
 class UserRegister(MethodView):
 
-    @blp.arguments(UserRegister)
-    @blp.response(200)
+    @blp.arguments(UserSchema)
+    @blp.response(200, UserSchema)
     def post(self, user_data):
-        user_id = uuid.uuid4().hex
-        user = {**user_data, "id": user_id}
-        users[user_id] = user
+        user = UserModel(**user_data)
+        user.id = 1
+        try:
+            db.session.add(user)
+            db.session.commit()
+        except SQLAlchemyError:
+            abort(500, message="An error occurred while inserting the item.")
 
         return user
+
