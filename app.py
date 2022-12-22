@@ -1,11 +1,14 @@
 from datetime import timedelta
 
 from flask_migrate import Migrate
+from sqlalchemy import create_engine
+from sqlalchemy_utils import create_database, database_exists
 
 from blocklist import BLOCKLIST
 from flask import Flask, jsonify
 from flask_smorest import Api
 from flask_jwt_extended import JWTManager
+
 
 from db import db
 
@@ -26,9 +29,17 @@ def create_app():
     app.config["OPENAPI_SWAGGER_UI_URL"] = "https://cdn.jsdelivr.net/npm/swagger-ui-dist/"
     app.config["SQLALCHEMY_DATABASE_URI"] = "mysql://root:password@172.17.0.2:3306/ForumDb"
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+    engine = create_engine(app.config["SQLALCHEMY_DATABASE_URI"])
+    if not database_exists(engine.url):  # Checks for the first time
+        create_database(engine.url)  # Create new DB
+
     db.init_app(app)
-    migrate = Migrate(app,db)
+    migrate = Migrate(app, db)
     api = Api(app)
+
+    # Create a connection to the database
+
 
     app.config["JWT_SECRET_KEY"] = "Team10"
     app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=7)

@@ -1,15 +1,18 @@
 from marshmallow import Schema, fields
 
+
 class PlainCommentSchema(Schema):
-    id = fields.Int()
+    id = fields.Str()
     commentText = fields.Str()
 
+
 class CommentSchema(PlainCommentSchema):
-    authorId = fields.Int()
-    themeId = fields.Int()
+    authorId = fields.Str()
+    themeId = fields.Str()
+
 
 class PlainUserSchema(Schema):
-    id = fields.Int(dump_only=True)
+    id = fields.Str(dump_only=True)
     firstName = fields.Str(required=True)
     lastName = fields.Str(required=True)
     address = fields.Str(required=True)
@@ -20,8 +23,7 @@ class PlainUserSchema(Schema):
     password = fields.Str(required=True, load_only=True)
 
 
-class UpdateUser(Schema):
-    id = fields.Int(required=True, load_only=True)
+class UpdateUserSchema(Schema):
     firstName = fields.Str()
     lastName = fields.Str()
     address = fields.Str()
@@ -30,19 +32,37 @@ class UpdateUser(Schema):
     phoneNumber = fields.Str()
 
 
-class PlainThemeSchema(Schema):
-    id = fields.Int(dump_only=True)
-    title = fields.Str(required=True)
+class CreateThemeSchema(Schema):
+    id = fields.Str(dump_only=True)
+    user_id = fields.Str(dump_only=True)
+    title = fields.Str()
+    open = fields.Bool()
 
 
-class ThemeSchema(PlainThemeSchema):
-    user_id = fields.Int(required=True, load_only=True)
-    user = fields.Nested(PlainUserSchema(), dump_only=True)
+class UserShortInfoSchema(Schema):
+    id = fields.Str(dump_only=True)
+    email = fields.Str(dump_only=True)
+    country = fields.Str(dump_only=True)
 
 
-class UserSchema(PlainUserSchema):
-    themes = fields.List(fields.Nested(PlainThemeSchema()), dump_only=True)
+class ThemeSchema(Schema):
+    id = fields.Str(dump_only=True)
+    title = fields.Str(dump_only=True)
+    open = fields.Bool(dump_only=True)
+    owner_id = fields.Str(dump_only=True)
+    owner = fields.Nested(UserShortInfoSchema(), dump_only=True)
+
+
+class ThemeOptionSchema(Schema):
+    open = fields.Bool()
+
 
 class UserLoginSchema(Schema):
-    email = fields.String(required=True)
-    password = fields.String(required=True)
+    email = fields.String()
+    password = fields.String()
+
+class UserUpdatePasswordSchema(Schema):
+    password = fields.String(load_only=True)
+
+class UserSchema(PlainUserSchema):
+    themes = fields.List(fields.Nested(ThemeSchema(), exclude=("owner", "owner_id")))

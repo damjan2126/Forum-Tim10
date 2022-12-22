@@ -1,4 +1,4 @@
-import random
+import uuid
 
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt
 from sqlalchemy.exc import SQLAlchemyError
@@ -10,7 +10,7 @@ from db import db
 from models import UserModel
 from flask.views import MethodView
 from flask_smorest import Blueprint, abort
-from schemas import PlainUserSchema, UserSchema, UserLoginSchema
+from schemas import PlainUserSchema, UserLoginSchema, UserSchema, UpdateUserSchema, UserUpdatePasswordSchema
 
 blp = Blueprint("users", __name__, description="Operations on users")
 logger = get_module_logger(__name__)
@@ -27,34 +27,82 @@ class UserLogout(MethodView):
 
 @blp.route("/user/<string:user_id>")
 class User(MethodView):
-
+    @blp.response(200, UserSchema)
     @jwt_required()
     def get(self, user_id):
-        logger.info(user_id)
-        return "ok"
-
-    def delete(self, user_id):
         user = UserModel.query.get_or_404(user_id)
-        db.session.delete(user)
-        db.session.commit()
-        return "ok"
+        return user
+
+    @blp.arguments(UpdateUserSchema)
+    @blp.response(200, UserSchema)
+    @jwt_required()
+    def put(self, user_data, user_id):
+        if not user_id == get_jwt()["sub"]:
+            abort(403, "Cant update another user")
+
+        try:
+            user = db.session.query(UserModel).filter(UserModel.id == user_id)
+            user.update(
+                user_data
+            )
+
+            db.session.commit()
+        except SQLAlchemyError as error:
+            logger.error("EXCEPTION HAPPENED INSIDE USER PUT")
+            logger.error(error)
+            abort(500, message="An error occurred while inserting the item.")
+
+        user = UserModel.query.get(user_id)
+
+        return user
+
+    @blp.arguments(UserUpdatePasswordSchema)
+    @blp.response(201)
+    @jwt_required()
+    def patch(self, user_data, user_id):
+        if not user_id == get_jwt()["sub"]:
+            abort(403, "Cant update another user")
+
+        user_data["password"] = pbkdf2_sha256.hash(user_data["password"])
+
+        user = UserModel.query.get_or_404(user_id)
+
+        user.password = user_data["password"]
+
+        try:
+            db.session.add(user)
+            db.session.commit()
+        except SQLAlchemyError as error:
+            logger.error("EXCEPTION HAPPENED INSIDE USER PATCH")
+            logger.error(error)
+            abort(500, message="An error occurred while changing the password.")
+
+        UserLogout().post()
+
+        return {"message": "Password successfully updated"}, 201
 
 
 @blp.route("/user/register")
 class UserRegister(MethodView):
 
-    @blp.arguments(UserSchema)
-    @blp.response(200, UserSchema)
+    @blp.arguments(PlainUserSchema)
+    @blp.response(200, PlainUserSchema)
     def post(self, user_data):
         if UserModel.query.filter(UserModel.email == user_data["email"]).first():
             abort(409, message="A user with that username already exists.")
 
         user = UserModel(**user_data)
+        user.id = uuid.uuid4().hex
         user.password = pbkdf2_sha256.hash(user_data["password"])
         logger.info(user.password)
 
-        db.session.add(user)
-        db.session.commit()
+        try:
+            db.session.add(user)
+            db.session.commit()
+        except SQLAlchemyError as error:
+            logger.error("EXCEPTION HAPPENED INSIDE REGISTER USER POST")
+            logger.error(error)
+            abort(500, message="An error occurred while inserting the item.")
 
         return {"message": "User created successfully."}, 201
 

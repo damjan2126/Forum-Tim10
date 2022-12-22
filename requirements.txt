@@ -9,3 +9,4 @@ marshmallow
 python-dotenv
 gunicorn
 mysqlclient
+SQLAlchemy-Utils
