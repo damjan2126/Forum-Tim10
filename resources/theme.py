@@ -6,21 +6,22 @@ from sqlalchemy.exc import SQLAlchemyError
 
 import loggerFactory
 from db import db
-from models import ThemeModel
-from schemas import CreateThemeSchema, ThemeSchema, ThemeOptionSchema
+from models import ThemeModel, CommentModel
+from schemas import CreateThemeSchema, ThemeSchema, ThemeOptionSchema, CommentSchema, ThemeWithCommentsSchema
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt
+from sqlalchemy import func
 
 blp = Blueprint("themes", __name__, description="Operations on themes")
 
 logger = loggerFactory.get_module_logger(__name__)
 
 
-@blp.route("/themes")
+@blp.route("/theme/all")
 class Themes(MethodView):
-    @blp.response(200)
+    @blp.response(200, ThemeSchema(many=True))
     @jwt_required()
     def get(self):
-
+        return ThemeModel.query.all()
 
 @blp.route("/theme/create")
 class CreateTheme(MethodView):
@@ -48,7 +49,7 @@ class CreateTheme(MethodView):
 
 @blp.route("/theme/<string:theme_id>")
 class Theme(MethodView):
-    @blp.response(200, ThemeSchema)
+    @blp.response(200, ThemeWithCommentsSchema)
     @jwt_required()
     def get(self, theme_id):
         theme = ThemeModel.query.get_or_404(theme_id)
@@ -95,3 +96,28 @@ class Theme(MethodView):
             abort(500, message="An error occurred while patching the theme.")
 
         return theme
+
+    @blp.arguments(CommentSchema)
+    @blp.response(200, CommentSchema)
+    @jwt_required()
+    def post(self,comment_data,theme_id):
+        theme = ThemeModel.query.get_or_404(theme_id)
+        user_id = get_jwt()["sub"]
+        if not theme.open:
+            abort(403, message="Cant comment on closed theme")
+
+        new_comment = CommentModel(**comment_data)
+        new_comment.id = uuid.uuid4().hex
+        new_comment.authorId = user_id
+        new_comment.themeId = theme.id
+        new_comment.createdAt = func.now()
+
+        try:
+            db.session.add(new_comment)
+            db.session.commit()
+        except SQLAlchemyError as error:
+            logger.error("EXCEPTION HAPPENED INSIDE THEME POST")
+            logger.error(error)
+            abort(500, message="An error occurred while creating comment.")
+
+        return new_comment

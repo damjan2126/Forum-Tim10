@@ -86,10 +86,10 @@ class User(MethodView):
 class UserRegister(MethodView):
 
     @blp.arguments(PlainUserSchema)
-    @blp.response(200, PlainUserSchema)
+    @blp.response(201)
     def post(self, user_data):
         if UserModel.query.filter(UserModel.email == user_data["email"]).first():
-            abort(409, message="A user with that username already exists.")
+            abort(409, message="A user with that email already exists.")
 
         user = UserModel(**user_data)
         user.id = uuid.uuid4().hex

@@ -2,13 +2,14 @@ from marshmallow import Schema, fields
 
 
 class PlainCommentSchema(Schema):
-    id = fields.Str()
+    id = fields.Str(dump_only=True)
+    createdAt = fields.DateTime(dump_only=True)
     commentText = fields.Str()
 
 
 class CommentSchema(PlainCommentSchema):
-    authorId = fields.Str()
-    themeId = fields.Str()
+    authorId = fields.Str(dump_only=True)
+    themeId = fields.Str(dump_only=True)
 
 
 class PlainUserSchema(Schema):
@@ -53,6 +54,15 @@ class ThemeSchema(Schema):
     owner = fields.Nested(UserShortInfoSchema(), dump_only=True)
 
 
+class CommentWithAuthorInfo(PlainCommentSchema):
+    authorId = fields.Str(dump_only=True)
+    user = fields.Nested(UserShortInfoSchema(), dump_only=True)
+
+
+class ThemeWithCommentsSchema(ThemeSchema):
+    comments = fields.List(fields.Nested(CommentWithAuthorInfo()), dump_only=True)
+
+
 class ThemeOptionSchema(Schema):
     open = fields.Bool()
 
@@ -61,8 +71,10 @@ class UserLoginSchema(Schema):
     email = fields.String()
     password = fields.String()
 
+
 class UserUpdatePasswordSchema(Schema):
     password = fields.String(load_only=True)
+
 
 class UserSchema(PlainUserSchema):
     themes = fields.List(fields.Nested(ThemeSchema(), exclude=("owner", "owner_id")))

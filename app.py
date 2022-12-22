@@ -9,9 +9,7 @@ from flask import Flask, jsonify
 from flask_smorest import Api
 from flask_jwt_extended import JWTManager
 
-
 from db import db
-
 
 from resources.theme import blp as ThemeBlueprint
 from resources.user import blp as UserBlueprint
@@ -28,6 +26,7 @@ def create_app():
     app.config["OPENAPI_SWAGGER_UI_PATH"] = "/swagger-ui"
     app.config["OPENAPI_SWAGGER_UI_URL"] = "https://cdn.jsdelivr.net/npm/swagger-ui-dist/"
     app.config["SQLALCHEMY_DATABASE_URI"] = "mysql://root:password@172.17.0.2:3306/ForumDb"
+    #app.config["SQLALCHEMY_DATABASE_URI"] = "mysql://root:password@127.0.0.1:3306/ForumDb"
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
     engine = create_engine(app.config["SQLALCHEMY_DATABASE_URI"])
@@ -39,7 +38,6 @@ def create_app():
     api = Api(app)
 
     # Create a connection to the database
-
 
     app.config["JWT_SECRET_KEY"] = "Team10"
     app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(days=7)
