@@ -6,4 +6,16 @@ docker run --net=bridge --name api-container -dp 5000:5000 -w /app -v ${PWD}:/ap
 
 Unutar Dockera:
 
-kontejner za flask api -> 
+Containers -> levi klik na api-container -> terminal
+
+ukucati sledece komande:
+
+bash
+
+flask db init
+flask db migrate
+flask db upgrade
+
+povezati se na swagger preko:
+
+localhost:5000/swagger-ui (http)
