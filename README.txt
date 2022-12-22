@@ -17,5 +17,5 @@ flask db migrate
 flask db upgrade
 
 povezati se na swagger preko:
-
+aa
 localhost:5000/swagger-ui (http)
