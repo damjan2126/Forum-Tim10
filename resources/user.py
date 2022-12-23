@@ -117,6 +117,6 @@ class UserLogin(MethodView):
 
         if user and pbkdf2_sha256.verify(user_data["password"], user.password):
             access_token = create_access_token(identity=user.id)
-            return {"access_token": access_token}, 200
+            return {"access_token": access_token, "user_id": user.id}, 200
 
         abort(401, message="Invalid credentials.")

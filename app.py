@@ -8,7 +8,7 @@ from blocklist import BLOCKLIST
 from flask import Flask, jsonify
 from flask_smorest import Api
 from flask_jwt_extended import JWTManager
-
+from flask_cors import CORS
 from db import db
 
 from resources.theme import blp as ThemeBlueprint
@@ -36,6 +36,7 @@ def create_app():
     db.init_app(app)
     migrate = Migrate(app, db)
     api = Api(app)
+    CORS(app)
 
     # Create a connection to the database
 
