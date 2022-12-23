@@ -1,3 +1,5 @@
+from sqlalchemy import func
+
 from db import db
 
 
@@ -12,3 +14,4 @@ class ThemeModel(db.Model):
     owner = db.relationship("UserModel", back_populates="themes")
     comments = db.relationship("CommentModel", back_populates="themes", lazy="dynamic")
     subscribers = db.relationship("UserModel", back_populates="subbedThemes", secondary="themes_subscribers")
+    comment_count = db.Column(db.Integer, unique=False, nullable=True, server_default='0')

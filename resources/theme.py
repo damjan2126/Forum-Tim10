@@ -6,9 +6,10 @@ from sqlalchemy.exc import SQLAlchemyError
 
 import loggerFactory
 from db import db
-from models import ThemeModel, CommentModel
-from schemas import CreateThemeSchema, ThemeSchema, ThemeOptionSchema, CommentSchema, ThemeWithCommentsSchema
-from flask_jwt_extended import create_access_token, jwt_required, get_jwt
+from models import ThemeModel, CommentModel, ThemesAndSubs
+from schemas import CreateThemeSchema, ThemeSchema, ThemeOptionSchema, CommentSchema, ThemeWithCommentsSchema, \
+    PlainSubscribeSchema
+from flask_jwt_extended import jwt_required, get_jwt
 from sqlalchemy import func
 
 blp = Blueprint("themes", __name__, description="Operations on themes")
@@ -21,7 +22,10 @@ class Themes(MethodView):
     @blp.response(200, ThemeSchema(many=True))
     @jwt_required()
     def get(self):
-        return ThemeModel.query.all()
+        themes = ThemeModel.query.all()
+
+        return themes
+
 
 @blp.route("/theme/create")
 class CreateTheme(MethodView):
@@ -46,14 +50,56 @@ class CreateTheme(MethodView):
 
         return new_theme
 
+@blp.route("/theme/subscribe/<string:theme_id>")
+class ThemeSubscribe(MethodView):
+    @blp.response(201)
+    @jwt_required()
+    def post(self, theme_id):
+        user_id = get_jwt()["sub"]
+        id = uuid.uuid4().hex
+        theme = ThemeModel.query.get_or_404(theme_id)
+
+        if not theme:
+            abort(404, message="Theme with that id not found")
+        elif theme.owner_id == user_id:
+            abort(403, message="Cannot subscribe to the theme user id is owner of")
+
+        new_sub = ThemesAndSubs()
+        new_sub.id = id
+        new_sub.sub_id = user_id
+        new_sub.theme_id = theme.id
+
+        try:
+            db.session.add(new_sub)
+            db.session.commit()
+        except SQLAlchemyError as error:
+            logger.error("EXCEPTION HAPPENED INSIDE THEME SUBSCRIBE POST")
+            logger.error(error)
+            abort(500, message="An error occurred while inserting new sub to the theme.")
+
+        return
 
 @blp.route("/theme/<string:theme_id>")
 class Theme(MethodView):
     @blp.response(200, ThemeWithCommentsSchema)
     @jwt_required()
     def get(self, theme_id):
-        theme = ThemeModel.query.get_or_404(theme_id)
-        return theme
+        theme = ThemeModel.query.filter_by(id=theme_id).first()
+        themeToReturn = ThemeWithCommentsSchema()
+        themeToReturn.id = theme.id
+        themeToReturn.owner_id = theme.owner_id
+        themeToReturn.comments = (
+                                    db.session.query(CommentModel)
+                                    .filter_by(themeId=theme.id)
+                                    .order_by(CommentModel.createdAt)
+                                    .all()
+                                )
+
+        themeToReturn.owner = theme.owner
+        themeToReturn.open = theme.open
+        themeToReturn.title = theme.title
+
+        return themeToReturn
 
     @blp.response(200)
     @jwt_required()
@@ -100,7 +146,7 @@ class Theme(MethodView):
     @blp.arguments(CommentSchema)
     @blp.response(200, CommentSchema)
     @jwt_required()
-    def post(self,comment_data,theme_id):
+    def post(self, comment_data, theme_id):
         theme = ThemeModel.query.get_or_404(theme_id)
         user_id = get_jwt()["sub"]
         if not theme.open:
@@ -114,6 +160,8 @@ class Theme(MethodView):
 
         try:
             db.session.add(new_comment)
+            db.session.commit()
+            theme.comment_count += 1
             db.session.commit()
         except SQLAlchemyError as error:
             logger.error("EXCEPTION HAPPENED INSIDE THEME POST")
