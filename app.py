@@ -17,6 +17,7 @@ from resources.user import blp as UserBlueprint
 
 def create_app():
     app = Flask(__name__)
+    CORS(app)
 
     app.config["PROPAGATE_EXCEPTIONS"] = True
     app.config["API_TITLE"] = "Forum REST API"
@@ -36,7 +37,7 @@ def create_app():
     db.init_app(app)
     migrate = Migrate(app, db)
     api = Api(app)
-    CORS(app)
+
 
     # Create a connection to the database
 
