@@ -15,3 +15,6 @@ class ThemeModel(db.Model):
     comments = db.relationship("CommentModel", back_populates="themes", lazy="dynamic")
     subscribers = db.relationship("UserModel", back_populates="subbedThemes", secondary="themes_subscribers")
     comment_count = db.Column(db.Integer, unique=False, nullable=True, server_default='0')
+    like_count = db.Column(db.Integer, unique=False, nullable=True, server_default='0')
+    dislike_count = db.Column(db.Integer, unique=False, nullable=True, server_default='0')
+    subbed = db.Column(db.Boolean, unique=False, nullable=True)

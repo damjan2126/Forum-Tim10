@@ -7,6 +7,11 @@ class PlainCommentSchema(Schema):
     commentText = fields.Str()
 
 
+class PlainThemeRateSchema(Schema):
+    theme_id = fields.Str(dump_only=True)
+    user_id = fields.Str(dump_only=True)
+    rating = fields.Bool()
+
 class PlainSubscribeSchema(Schema):
     id = fields.Str()
     sub_id = fields.Str()
@@ -59,6 +64,9 @@ class ThemeSchema(Schema):
     owner_id = fields.Str(dump_only=True)
     owner = fields.Nested(UserShortInfoSchema(), dump_only=True)
     comment_count = fields.Integer(dump_only=True)
+    like_count = fields.Int(dump_only=True)
+    dislike_count = fields.Int(dump_only=True)
+    subbed = fields.Bool(dump_only=True)
 
 
 class CommentWithAuthorInfo(PlainCommentSchema):

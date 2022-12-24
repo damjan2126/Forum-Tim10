@@ -3,27 +3,68 @@ import uuid
 from flask.views import MethodView
 from flask_smorest import Blueprint, abort
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.sql.operators import ColumnOperators
 
 import loggerFactory
 from db import db
 from models import ThemeModel, CommentModel, ThemesAndSubs
+from models.ratingTheme import ThemeRatingModel
 from schemas import CreateThemeSchema, ThemeSchema, ThemeOptionSchema, CommentSchema, ThemeWithCommentsSchema, \
-    PlainSubscribeSchema
+    PlainThemeRateSchema
 from flask_jwt_extended import jwt_required, get_jwt
-from sqlalchemy import func
+from sqlalchemy import func, desc
 
 blp = Blueprint("themes", __name__, description="Operations on themes")
 
 logger = loggerFactory.get_module_logger(__name__)
 
 
-@blp.route("/theme/all")
+@blp.route("/theme/all/<string:sort_by>")
 class Themes(MethodView):
     @blp.response(200, ThemeSchema(many=True))
     @jwt_required()
-    def get(self):
-        themes = ThemeModel.query.all()
+    def get(self, sort_by):
+        if sort_by == "likeDesc":
+            themes = ThemeModel.query.order_by(desc(ThemeModel.like_count)).all()
+        elif sort_by == "likeAsc":
+            themes = ThemeModel.query.order_by(ThemeModel.like_count).all()
+        elif sort_by == "dislikeDesc":
+            themes = ThemeModel.query.order_by(desc(ThemeModel.dislike_count)).all()
+        elif sort_by == "dislikeAsc":
+            themes = ThemeModel.query.order_by(ThemeModel.dislike_count).all()
+        elif sort_by == "commentDesc":
+            themes = ThemeModel.query.order_by(desc(ThemeModel.comment_count)).all()
+        elif sort_by == "commentsAsc":
+            themes = ThemeModel.query.order_by(ThemeModel.comment_count).all()
 
+        if not themes:
+            abort(404, message="Query input not recognized")
+
+        user_id = get_jwt()["sub"]
+
+        subbed_themes = ThemesAndSubs.query.filter_by(sub_id=user_id).all()
+        theme_ids = [theme.theme_id for theme in subbed_themes]
+
+        for theme in themes:
+
+            if theme.id in theme_ids:
+                theme.subbed = True
+            else:
+                theme.subbed = False
+
+        return themes
+
+
+@blp.route("/theme/all/search/<string:theme_title>")
+class ThemeSearch(MethodView):
+    @blp.response(200, ThemeSchema(many=True))
+    @jwt_required()
+    def get(self, theme_title):
+        themes = (
+            ThemeModel.query
+            .filter(ColumnOperators.like(ThemeModel.title, f"%{theme_title}%"))
+            .all()
+        )
         return themes
 
 
@@ -49,6 +90,7 @@ class CreateTheme(MethodView):
             abort(500, message="An error occurred while inserting the item.")
 
         return new_theme
+
 
 @blp.route("/theme/subscribe/<string:theme_id>")
 class ThemeSubscribe(MethodView):
@@ -79,6 +121,102 @@ class ThemeSubscribe(MethodView):
 
         return
 
+
+@blp.route("/theme/rate/<string:theme_id>")
+class ThemeRate(MethodView):
+
+    @blp.response(201)
+    @blp.arguments(PlainThemeRateSchema)
+    @jwt_required()
+    def post(self, rating_data, theme_id):
+        user_id = get_jwt()["sub"]
+        theme_rating = ThemeRatingModel.query.filter(
+            ThemeRatingModel.theme_id == theme_id,
+            ThemeRatingModel.user_id == user_id,
+            ThemeRatingModel.rating == rating_data["rating"]
+        ).first()
+        if theme_rating:
+            rating = theme_rating.rating
+
+            try:
+                db.session.delete(theme_rating)
+                db.session.commit()
+
+            except SQLAlchemyError as error:
+                logger.error("EXCEPTION HAPPENED INSIDE THEME RATE POST")
+                logger.error(error)
+                abort(500, message="An error occurred while deleting existing theme rating.")
+
+            theme = ThemeModel.query.get(theme_id)
+
+            if rating:
+                theme.like_count -= 1
+            else:
+                theme.dislike_count -= 1
+
+            try:
+                db.session.add(theme)
+                db.session.commit()
+            except SQLAlchemyError as error:
+                logger.error("EXCEPTION HAPPENED INSIDE THEME RATE POST")
+                logger.error(error)
+                abort(500, message="An error occurred while updating existing theme with deleted rating.")
+
+            return "Success"
+
+        theme_rating = ThemeRatingModel.query.filter(
+            ThemeRatingModel.theme_id == theme_id,
+            ThemeRatingModel.user_id == user_id
+        ).first()
+
+        theme = ThemeModel.query.get(theme_id)
+        if theme_rating:
+            theme_rating.rating = rating_data["rating"]
+            try:
+                db.session.add(theme_rating)
+                db.session.commit()
+            except SQLAlchemyError as error:
+                logger.error("EXCEPTION HAPPENED INSIDE THEME RATE POST")
+                logger.error(error)
+                abort(500, message="An error occurred while updating existing theme rating.")
+
+            if rating_data["rating"]:
+                theme.like_count += 1
+                theme.dislike_count -= 1
+            else:
+                theme.like_count -= 1
+                theme.dislike_count += 1
+
+        else:
+            new_rating = ThemeRatingModel(**rating_data)
+            new_rating.id = uuid.uuid4().hex
+            new_rating.theme_id = theme_id
+            new_rating.user_id = user_id
+
+            try:
+                db.session.add(new_rating)
+                db.session.commit()
+            except SQLAlchemyError as error:
+                logger.error("EXCEPTION HAPPENED THEME RATE POST")
+                logger.error(error)
+                abort(500, message="An error occurred while creating new theme rating.")
+
+            if rating_data["rating"]:
+                theme.like_count += 1
+            else:
+                theme.dislike_count += 1
+
+        try:
+            db.session.add(theme)
+            db.session.commit()
+        except SQLAlchemyError as error:
+            logger.error("EXCEPTION HAPPENED INSIDE THEME RATE POST")
+            logger.error(error)
+            abort(500, message="An error occurred while changing existing theme rating.")
+
+        return "Success"
+
+
 @blp.route("/theme/<string:theme_id>")
 class Theme(MethodView):
     @blp.response(200, ThemeWithCommentsSchema)
@@ -89,11 +227,11 @@ class Theme(MethodView):
         themeToReturn.id = theme.id
         themeToReturn.owner_id = theme.owner_id
         themeToReturn.comments = (
-                                    db.session.query(CommentModel)
-                                    .filter_by(themeId=theme.id)
-                                    .order_by(CommentModel.createdAt)
-                                    .all()
-                                )
+            db.session.query(CommentModel)
+            .filter_by(themeId=theme.id)
+            .order_by(CommentModel.createdAt)
+            .all()
+        )
 
         themeToReturn.owner = theme.owner
         themeToReturn.open = theme.open
