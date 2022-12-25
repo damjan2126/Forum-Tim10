@@ -1,5 +1,3 @@
-from sqlalchemy import func
-
 from db import db
 
 
@@ -18,3 +16,4 @@ class ThemeModel(db.Model):
     like_count = db.Column(db.Integer, unique=False, nullable=True, server_default='0')
     dislike_count = db.Column(db.Integer, unique=False, nullable=True, server_default='0')
     subbed = db.Column(db.Boolean, unique=False, nullable=True)
+    rating = db.Column(db.Boolean, unique=False, nullable=True)

@@ -12,6 +12,7 @@ class PlainThemeRateSchema(Schema):
     user_id = fields.Str(dump_only=True)
     rating = fields.Bool()
 
+
 class PlainSubscribeSchema(Schema):
     id = fields.Str()
     sub_id = fields.Str()
@@ -55,6 +56,8 @@ class UserShortInfoSchema(Schema):
     id = fields.Str(dump_only=True)
     email = fields.Str(dump_only=True)
     country = fields.Str(dump_only=True)
+    firstName = fields.Str(dump_only=True)
+    lastName = fields.Str(dump_only=True)
 
 
 class ThemeSchema(Schema):
@@ -67,6 +70,7 @@ class ThemeSchema(Schema):
     like_count = fields.Int(dump_only=True)
     dislike_count = fields.Int(dump_only=True)
     subbed = fields.Bool(dump_only=True)
+    rating = fields.Bool(dump_only=True)
 
 
 class CommentWithAuthorInfo(PlainCommentSchema):

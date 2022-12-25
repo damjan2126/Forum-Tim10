@@ -43,11 +43,22 @@ class Themes(MethodView):
         user_id = get_jwt()["sub"]
 
         subbed_themes = ThemesAndSubs.query.filter_by(sub_id=user_id).all()
-        theme_ids = [theme.theme_id for theme in subbed_themes]
+        rated_themes = ThemeRatingModel.query.filter_by(user_id=user_id).all()
+        subbed_themes_ids = [theme.theme_id for theme in subbed_themes]
 
         for theme in themes:
 
-            if theme.id in theme_ids:
+            for rated_theme in rated_themes:
+                logger.info(rated_theme.id)
+                if rated_theme.theme_id == theme.id:
+                    if rated_theme.rating:
+                        theme.rating = True
+                    elif not rated_theme.rating:
+                        theme.rating = False
+                else:
+                    theme.rating = None
+
+            if theme.id in subbed_themes_ids:
                 theme.subbed = True
             else:
                 theme.subbed = False
