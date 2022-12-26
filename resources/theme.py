@@ -244,6 +244,18 @@ class Theme(MethodView):
             .all()
         )
 
+        user_id = get_jwt()["sub"]
+
+        rated_comments = ThemeRatingModel.query.filter_by(user_id=user_id).all()
+
+        for comment in themeToReturn.comments:
+            for rated_comment in rated_comments:
+                if rated_comment.comment_id == comment.id:
+                    if rated_comment.rating:
+                        comment.rating = True
+                    elif not rated_comment.rating:
+                        comment.rating = False
+
         themeToReturn.owner = theme.owner
         themeToReturn.open = theme.open
         themeToReturn.title = theme.title

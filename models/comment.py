@@ -13,3 +13,6 @@ class CommentModel(db.Model):
     user = db.relationship("UserModel", back_populates="comments")
     themeId = db.Column(db.String(33), db.ForeignKey("themes.id"), unique=False, nullable=False)
     themes = db.relationship("ThemeModel", back_populates="comments")
+    like_count = db.Column(db.Integer, unique=False, nullable=True, server_default='0')
+    dislike_count = db.Column(db.Integer, unique=False, nullable=True, server_default='0')
+    rating = db.Column(db.Boolean, unique=False, nullable=True)

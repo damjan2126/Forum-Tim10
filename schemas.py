@@ -6,6 +6,9 @@ class PlainCommentSchema(Schema):
     createdAt = fields.DateTime(dump_only=True)
     commentText = fields.Str()
 
+class PlainCommentRateSchema(Schema):
+    rating = fields.Bool()
+
 
 class PlainThemeRateSchema(Schema):
     theme_id = fields.Str(dump_only=True)
@@ -76,6 +79,7 @@ class ThemeSchema(Schema):
 class CommentWithAuthorInfo(PlainCommentSchema):
     authorId = fields.Str(dump_only=True)
     user = fields.Nested(UserShortInfoSchema(), dump_only=True)
+    rating = fields.Bool(dump_only=True)
 
 
 class ThemeWithCommentsSchema(ThemeSchema):
