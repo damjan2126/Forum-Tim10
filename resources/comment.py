@@ -13,3 +13,4 @@ from flask_jwt_extended import create_access_token, jwt_required, get_jwt
 blp = Blueprint("comments", __name__, description="Operations on comments")
 
 logger = loggerFactory.get_module_logger(__name__)
+

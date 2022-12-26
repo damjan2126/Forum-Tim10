@@ -49,14 +49,11 @@ class Themes(MethodView):
         for theme in themes:
 
             for rated_theme in rated_themes:
-                logger.info(rated_theme.id)
                 if rated_theme.theme_id == theme.id:
                     if rated_theme.rating:
                         theme.rating = True
                     elif not rated_theme.rating:
                         theme.rating = False
-                else:
-                    theme.rating = None
 
             if theme.id in subbed_themes_ids:
                 theme.subbed = True
@@ -234,6 +231,9 @@ class Theme(MethodView):
     @jwt_required()
     def get(self, theme_id):
         theme = ThemeModel.query.filter_by(id=theme_id).first()
+        if not theme:
+            abort(404, message="Theme with that id not found")
+
         themeToReturn = ThemeWithCommentsSchema()
         themeToReturn.id = theme.id
         themeToReturn.owner_id = theme.owner_id
@@ -247,6 +247,23 @@ class Theme(MethodView):
         themeToReturn.owner = theme.owner
         themeToReturn.open = theme.open
         themeToReturn.title = theme.title
+
+        subbed_themes = ThemesAndSubs.query.filter_by(sub_id=themeToReturn.owner_id).all()
+        rated_themes = ThemeRatingModel.query.filter_by(user_id=themeToReturn.owner_id).all()
+        subbed_themes_ids = [theme.theme_id for theme in subbed_themes]
+
+        for rated_theme in rated_themes:
+            logger.info(rated_theme.id)
+            if rated_theme.theme_id == themeToReturn.id:
+                if rated_theme.rating:
+                    themeToReturn.rating = True
+                elif not rated_theme.rating:
+                    themeToReturn.rating = False
+
+        if themeToReturn.id in subbed_themes_ids:
+            themeToReturn.subbed = True
+        else:
+            themeToReturn.subbed = False
 
         return themeToReturn
 
