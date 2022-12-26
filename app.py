@@ -26,7 +26,7 @@ def create_app():
     app.config["OPENAPI_URL_PREFIX"] = "/"
     app.config["OPENAPI_SWAGGER_UI_PATH"] = "/swagger-ui"
     app.config["OPENAPI_SWAGGER_UI_URL"] = "https://cdn.jsdelivr.net/npm/swagger-ui-dist/"
-    app.config["SQLALCHEMY_DATABASE_URI"] = "mysql://root:password@172.17.0.2:3306/ForumDb"
+    app.config["SQLALCHEMY_DATABASE_URI"] = "mysql://root:password@172.20.0.2:3306/ForumDb"
     #app.config["SQLALCHEMY_DATABASE_URI"] = "mysql://root:password@127.0.0.1:3306/ForumDb"
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
