@@ -26,6 +26,33 @@ export const getUser = createAsyncThunk(
   }
 );
 
+export const updateUser = createAsyncThunk(
+  "/updateUser",
+  async (
+    { user_id, lastName, firstName, country, city, address, phoneNumber },
+    thunkAPI
+  ) => {
+    try {
+      const userData = await fetch.put(
+        `/user/${user_id}`,
+        {
+          lastName,
+          firstName,
+          country,
+          city,
+          address,
+          phoneNumber,
+        },
+        {
+          mode: "cors",
+        }
+      );
+      return userData;
+    } catch (error) {
+      return thunkAPI.rejectWithValue(error.response?.data);
+    }
+  }
+);
 
 const userSlice = createSlice({
   name: "user",
@@ -36,6 +63,14 @@ const userSlice = createSlice({
       state.firstName = payload.data.firstName;
       state.lastName = payload.data.lastName;
       state.email = payload.data.email;
+      state.country = payload.data.country;
+      state.address = payload.data.address;
+      state.city = payload.data.city;
+      state.phoneNumber = payload.data.phoneNumber;
+    });
+    builder.addCase(updateUser.fulfilled, (state, { payload }) => {
+      state.firstName = payload.data.firstName;
+      state.lastName = payload.data.lastName;
       state.country = payload.data.country;
       state.address = payload.data.address;
       state.city = payload.data.city;

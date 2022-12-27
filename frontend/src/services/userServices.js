@@ -48,7 +48,16 @@ const logout = async () => {
   return response;
 };
 
+const changePassword = ({ user_id, password }) => {
+  return fetch.patch(
+    `/user/${user_id}`,
+    {
+      password,
+    },
+    { mode: "cors" }
+  );
+};
 
-const user = { register, login, logout };
+const user = { register, login, logout, changePassword };
 
 export default user;

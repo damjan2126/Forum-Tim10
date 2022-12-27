@@ -3,6 +3,7 @@ import AuthRoutes from "./auth/AuthRoute";
 import PrivateRoutes from "./auth/PrivateRoute";
 import Home from "./pages/home";
 import Login from "./pages/login";
+import Profile from "./pages/profile";
 import Registration from "./pages/registration";
 
 const App = () => {
@@ -11,6 +12,7 @@ const App = () => {
       <Routes>
         <Route element={<PrivateRoutes />}>
           <Route path="/" element={<Home />} />
+          <Route path="/profile" element={<Profile />} />
         </Route>
         <Route element={<AuthRoutes />}>
           <Route path="/login" element={<Login />} />
