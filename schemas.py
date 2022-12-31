@@ -80,6 +80,8 @@ class CommentWithAuthorInfo(PlainCommentSchema):
     authorId = fields.Str(dump_only=True)
     user = fields.Nested(UserShortInfoSchema(), dump_only=True)
     rating = fields.Bool(dump_only=True)
+    like_count = fields.Int(dump_only=True)
+    dislike_count = fields.Int(dump_only=True)
 
 
 class ThemeWithCommentsSchema(ThemeSchema):

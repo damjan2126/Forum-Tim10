@@ -8,6 +8,7 @@ from sqlalchemy.sql.operators import ColumnOperators
 import loggerFactory
 from db import db
 from models import ThemeModel, CommentModel, ThemesAndSubs
+from models.ratingComment import RatingCommentModel
 from models.ratingTheme import ThemeRatingModel
 from schemas import CreateThemeSchema, ThemeSchema, ThemeOptionSchema, CommentSchema, ThemeWithCommentsSchema, \
     PlainThemeRateSchema
@@ -244,6 +245,17 @@ class Theme(MethodView):
             .all()
         )
 
+
+        for comment in themeToReturn.comments:
+            comment.like_count = 0
+            comment.dislike_count = 0
+            comment_ratings = RatingCommentModel.query.filter_by(comment_id=comment.id).all()
+            for rating in comment_ratings:
+                if rating.rating:
+                    comment.like_count +=1
+                else:
+                    comment.dislike_count +=1
+
         user_id = get_jwt()["sub"]
 
         rated_comments = ThemeRatingModel.query.filter_by(user_id=user_id).all()
@@ -260,8 +272,20 @@ class Theme(MethodView):
         themeToReturn.open = theme.open
         themeToReturn.title = theme.title
 
-        subbed_themes = ThemesAndSubs.query.filter_by(sub_id=themeToReturn.owner_id).all()
-        rated_themes = ThemeRatingModel.query.filter_by(user_id=themeToReturn.owner_id).all()
+        themeLikes = ThemeRatingModel.query.filter(
+            ThemeRatingModel.theme_id == theme_id,
+            ThemeRatingModel.rating == True).all()
+
+        themeToReturn.like_count = len(themeLikes)
+
+        themeDislikes = ThemeRatingModel.query.filter(
+            ThemeRatingModel.theme_id == theme_id,
+            ThemeRatingModel.rating == False).all()
+
+        themeToReturn.dislike_count = len(themeDislikes)
+
+        subbed_themes = ThemesAndSubs.query.filter_by(sub_id=user_id).all()
+        rated_themes = ThemeRatingModel.query.filter_by(user_id=user_id).all()
         subbed_themes_ids = [theme.theme_id for theme in subbed_themes]
 
         for rated_theme in rated_themes:
