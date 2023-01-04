@@ -48,7 +48,6 @@ class Themes(MethodView):
         subbed_themes_ids = [theme.theme_id for theme in subbed_themes]
 
         for theme in themes:
-
             for rated_theme in rated_themes:
                 if rated_theme.theme_id == theme.id:
                     if rated_theme.rating:

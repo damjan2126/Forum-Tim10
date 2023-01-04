@@ -33,6 +33,19 @@ services:
     networks:
       - mynetwork
 
+  worker:
+    image: forum-tim103-api
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+      - api
+    command: rq worker --url redis://redis:6379
+    environment:
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY}
+    networks:
+      - mynetwork
+
 networks:
   mynetwork:
     driver: bridge

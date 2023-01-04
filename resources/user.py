@@ -1,8 +1,12 @@
+import os
 import uuid
 
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt
 from sqlalchemy.exc import SQLAlchemyError
 from passlib.hash import pbkdf2_sha256
+import redis
+from rq import Queue
+from tasks import send_simple_message
 
 from blocklist import BLOCKLIST
 from loggerFactory import get_module_logger
@@ -15,6 +19,8 @@ from schemas import PlainUserSchema, UserLoginSchema, UserSchema, UpdateUserSche
 blp = Blueprint("users", __name__, description="Operations on users")
 logger = get_module_logger(__name__)
 
+r = redis.Redis(host='redis', port=6379)
+q = Queue(connection=r)
 
 @blp.route("/user/logout")
 class UserLogout(MethodView):
@@ -88,6 +94,8 @@ class UserRegister(MethodView):
     @blp.arguments(PlainUserSchema)
     @blp.response(201)
     def post(self, user_data):
+        logger.info("here")
+        task = q.enqueue(send_simple_message, "damjan2126@gmail.com", "yesss", "wrork")
         if UserModel.query.filter(UserModel.email == user_data["email"]).first():
             abort(409, message="A user with that email already exists.")
 
