@@ -258,7 +258,7 @@ class Theme(MethodView):
 
         user_id = get_jwt()["sub"]
 
-        rated_comments = ThemeRatingModel.query.filter_by(user_id=user_id).all()
+        rated_comments = RatingCommentModel.query.filter_by(user_id=user_id).all()
 
         for comment in themeToReturn.comments:
             for rated_comment in rated_comments:

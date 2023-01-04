@@ -26,9 +26,10 @@ def create_app():
     app.config["OPENAPI_URL_PREFIX"] = "/"
     app.config["OPENAPI_SWAGGER_UI_PATH"] = "/swagger-ui"
     app.config["OPENAPI_SWAGGER_UI_URL"] = "https://cdn.jsdelivr.net/npm/swagger-ui-dist/"
-    #app.config["SQLALCHEMY_DATABASE_URI"] = f"mysql://root:password@mysql-server/ForumDb"
-    app.config["SQLALCHEMY_DATABASE_URI"] = f"mysql://root:password@127.0.0.1:3306/ForumDb"
+    app.config["SQLALCHEMY_DATABASE_URI"] = f"mysql://root:password@mysql-server/ForumDb"
+    #app.config["SQLALCHEMY_DATABASE_URI"] = f"mysql://root:password@127.0.0.1:3306/ForumDb"
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
 
     engine = create_engine(app.config["SQLALCHEMY_DATABASE_URI"])
     if not database_exists(engine.url):  # Checks for the first time
