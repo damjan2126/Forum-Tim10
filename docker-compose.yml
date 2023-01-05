@@ -34,7 +34,7 @@ services:
       - mynetwork
 
   worker:
-    image: forum-tim103-api
+    image: forum-tim10-api
     volumes:
       - .:/app
     depends_on:
