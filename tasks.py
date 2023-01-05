@@ -1,16 +1,16 @@
-
 # using SendGrid's Python Library
 # https://github.com/sendgrid/sendgrid-python
 import os
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
 
+
 def send_simple_message(to, subject, body):
     message = Mail(
         from_email='forumtim10@gmail.com',
-        to_emails='damjan2126@gmail.com',
-        subject='Sending with Twilio SendGrid is Fun',
-        html_content='<strong>and easy to do anywhere, even with Python</strong>')
+        to_emails=to,
+        subject=subject,
+        html_content=body)
     try:
         sg = SendGridAPIClient(os.environ.get('SENDGRID_API_KEY'))
         response = sg.send(message)
@@ -18,4 +18,5 @@ def send_simple_message(to, subject, body):
         print(response.body)
         print(response.headers)
     except Exception as e:
+        print("fuck")
         print(e)

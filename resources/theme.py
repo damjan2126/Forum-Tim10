@@ -1,13 +1,18 @@
 import uuid
 
+import redis
 from flask.views import MethodView
 from flask_smorest import Blueprint, abort
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.sql.operators import ColumnOperators
 
+import redis
+from rq import Queue
+from tasks import send_simple_message
+
 import loggerFactory
 from db import db
-from models import ThemeModel, CommentModel, ThemesAndSubs
+from models import ThemeModel, CommentModel, ThemesAndSubs, UserModel
 from models.ratingComment import RatingCommentModel
 from models.ratingTheme import ThemeRatingModel
 from schemas import CreateThemeSchema, ThemeSchema, ThemeOptionSchema, CommentSchema, ThemeWithCommentsSchema, \
@@ -18,6 +23,9 @@ from sqlalchemy import func, desc
 blp = Blueprint("themes", __name__, description="Operations on themes")
 
 logger = loggerFactory.get_module_logger(__name__)
+
+r = redis.Redis(host='redis', port=6379)
+q = Queue(connection=r)
 
 
 @blp.route("/theme/all/<string:sort_by>")
@@ -270,6 +278,7 @@ class Theme(MethodView):
         themeToReturn.owner = theme.owner
         themeToReturn.open = theme.open
         themeToReturn.title = theme.title
+        themeToReturn.rating = theme.rating
 
         themeLikes = ThemeRatingModel.query.filter(
             ThemeRatingModel.theme_id == theme_id,
@@ -368,5 +377,16 @@ class Theme(MethodView):
             logger.error("EXCEPTION HAPPENED INSIDE THEME POST")
             logger.error(error)
             abort(500, message="An error occurred while creating comment.")
+
+        user_body = UserModel.query.get_or_404(user_id)
+        email_body = f'<p>User {user_body.firstName} {user_body.lastName} commented: </p>' + f'<p>{new_comment.commentText}</p>'
+        subs = ThemesAndSubs.query.filter(ThemesAndSubs.theme_id == theme_id)
+        for sub in subs:
+            user = UserModel.query.get_or_404(sub.sub_id)
+            subject = 'New comment on ' + theme.title
+            body = email_body + f'<a href="http://localhost:5000/comment/{new_comment.id}/{user.id}/Like">Like Comment</a>' + '<p></p>' + f'<a href="http://localhost:5000/comment/{new_comment.id}/{user.id}/Dislike">Dislike comment</a>'
+            task = q.enqueue(send_simple_message, user.email, subject, body)
+
+
 
         return new_comment
