@@ -1,26 +1,15 @@
 import React, { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { getUser } from "../store/userSlice";
-import Header from "../components/Header";
-import CreateTheme from "../components/CreateThemeModal";
+import Header from "../components/layout/Header";
+
 import theme from "../services/themeServices";
-import {
-  Button,
-  Card,
-  CardActions,
-  CardContent,
-  Container,
-  FormControlLabel,
-  Grid,
-  IconButton,
-  InputBase,
-  MenuItem,
-  Paper,
-  Select,
-  Typography,
-} from "@mui/material";
-import SearchIcon from "@mui/icons-material/Search";
+import { Button, Grid } from "@mui/material";
+import Search from "../components/theme/SearchTheme";
+import Sorting from "../components/theme/SortingTheme";
+import CreateTheme from "../components/theme/CreateThemeModal";
+import MyThemes from "../components/theme/MyThemes";
+import OtherThemes from "../components/theme/OtherThemes";
 
 const Home = () => {
   useEffect(() => {
@@ -31,18 +20,25 @@ const Home = () => {
 
   const [open, setOpen] = useState(false);
   const [sortBy, setSortBy] = useState("likeDesc");
+  const [searchParams, setSearchParams] = useState("");
 
   useEffect(() => {
-    theme
-      .getAllThemes({ sort_by: sortBy })
-      .then(({ data }) => setMyThemes(data));
-  }, [open]);
+    if (searchParams.length === 0) {
+      theme
+        .getAllThemes({ sort_by: sortBy })
+        .then(({ data }) => setMyThemes(data));
+    } else {
+      theme
+        .searchTheme({ theme_title: searchParams })
+        .then(({ data }) => setMyThemes(data));
+    }
+  }, [open, sortBy, searchParams]);
+  
 
   const [myThemes, setMyThemes] = useState([]);
-  const [otherThemes, setOtherThemes] = useState([]);
+
 
   const dispatch = useDispatch();
-  let navigate = useNavigate();
 
   const handleClickOpen = () => {
     setOpen(true);
@@ -52,8 +48,11 @@ const Home = () => {
     setOpen(false);
   };
 
-  const handleChange = (event) => {
+  const handleSortingChange = (event) => {
     setSortBy(event.target.value);
+  };
+  const handleSearchChange = (event) => {
+    setSearchParams(event.target.value);
   };
 
   return (
@@ -61,49 +60,10 @@ const Home = () => {
       <Header />
       <Grid container justifyContent="end">
         <Grid item>
-          <Paper
-            style={{ margin: "20px" }}
-            component="form"
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              width: 300,
-              height: 40,
-            }}
-          >
-            <InputBase
-              size="small"
-              sx={{ ml: 1, flex: 1 }}
-              placeholder="Search themes"
-            />
-            <IconButton type="button" sx={{ p: "10px" }}>
-              <SearchIcon />
-            </IconButton>
-          </Paper>
+          <Search handleSearchChange={handleSearchChange} />
         </Grid>
         <Grid item>
-          <FormControlLabel
-            style={{ margin: "20px" }}
-            name="Sort by"
-            value="true"
-            control={
-              <Select
-                style={{ marginLeft: "15px" }}
-                size="small"
-                value={sortBy}
-                onChange={handleChange}
-              >
-                <MenuItem value={"likeDesc"}>Likes &uarr;</MenuItem>
-                <MenuItem value={"likeAsc"}>Likes &darr;</MenuItem>
-                <MenuItem value={"dislikeDesc"}>Dislikes &uarr;</MenuItem>
-                <MenuItem value={"dislikeAsc"}>Dislikes &darr;</MenuItem>
-                <MenuItem value={"commentAsc"}>Comments &uarr;</MenuItem>
-                <MenuItem value={"commentDesc"}>Comments &darr;</MenuItem>
-              </Select>
-            }
-            label="Sort by"
-            labelPlacement="start"
-          />
+          <Sorting handleSortingChange={handleSortingChange} sortBy={sortBy} />
         </Grid>
         <Grid item>
           <Button
@@ -117,112 +77,8 @@ const Home = () => {
         </Grid>
       </Grid>
 
-      <Container sx={{ py: 6 }}>
-        <Typography
-          borderBottom="black 2px solid"
-          gutterBottom
-          variant="h4"
-          component="h2"
-        >
-          My themes
-        </Typography>
-        <Grid container spacing={6}>
-          {myThemes.map((theme) => {
-            if (
-              theme.owner_id == localStorage.getItem("user_id").slice(1, -1)
-            ) {
-              return (
-                <Grid item key={theme.id} xs={12} sm={3} md={3}>
-                  <Card
-                    sx={{
-                      height: "100%",
-                      display: "flex",
-                      flexDirection: "column",
-                      backgroundColor: "#7c84b936",
-                    }}
-                  >
-                    <CardContent sx={{ flexGrow: 1 }}>
-                      <Typography gutterBottom variant="h5" component="h2">
-                        {theme.title}
-                      </Typography>
-                      <Typography gutterBottom component="p">
-                        {`${theme.comment_count} comments`}
-                      </Typography>
-                    </CardContent>
-                    <CardActions>
-                      <Button>
-                        <Link
-                          style={{ textDecoration: "none", color: "#1976d2" }}
-                          state={{ id: theme.id }}
-                          to={`/${theme.title
-                            .replace(/ /g, "_")
-                            .toLowerCase()}`}
-                        >
-                          View
-                        </Link>
-                      </Button>
-                    </CardActions>
-                  </Card>
-                </Grid>
-              );
-            }
-          })}
-        </Grid>
-      </Container>
-      <Container sx={{ py: 6 }}>
-        <Typography
-          borderBottom="black 2px solid"
-          gutterBottom="large"
-          variant="h4"
-          component="h2"
-        >
-          All themes
-        </Typography>
-        <Grid container spacing={6}>
-          {myThemes.map((theme) => {
-            if (
-              theme.owner_id != localStorage.getItem("user_id").slice(1, -1)
-            ) {
-              return (
-                <Grid item key={theme.id} xs={12} sm={3} md={3}>
-                  <Card
-                    sx={{
-                      height: "100%",
-                      display: "flex",
-                      flexDirection: "column",
-                    }}
-                  >
-                    <CardContent sx={{ flexGrow: 1 }}>
-                      <Typography gutterBottom variant="h5" component="h2">
-                        {theme.title}
-                      </Typography>
-                      <Typography gutterBottom component="p">
-                        {`Created by ${theme.owner.email}`}
-                      </Typography>
-                      <Typography gutterBottom component="p">
-                        {`${theme.comment_count} comments`}
-                      </Typography>
-                    </CardContent>
-                    <CardActions>
-                      <Button>
-                        <Link
-                          style={{ textDecoration: "none", color: "#1976d2" }}
-                          state={{ id: theme.id }}
-                          to={`/${theme.title
-                            .replace(/ /g, "_")
-                            .toLowerCase()}`}
-                        >
-                          View
-                        </Link>
-                      </Button>
-                    </CardActions>
-                  </Card>
-                </Grid>
-              );
-            }
-          })}
-        </Grid>
-      </Container>
+      <MyThemes myThemes={myThemes} />
+      <OtherThemes myThemes={myThemes} />
     </>
   );
 };
