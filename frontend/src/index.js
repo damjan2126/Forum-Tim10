@@ -5,11 +5,25 @@ import { Provider } from "react-redux";
 import App from "./App";
 import store from "./store/store";
 
-const theme = createTheme();
 const root = ReactDOM.createRoot(document.getElementById("root"));
+const darkTheme = createTheme({
+  palette: {
+    mode: "dark",
+  },
+  components: {
+    MuiContainer: {
+      defaultProps: {
+        style: {
+          scrollbarWidth: "none",
+        },
+      },
+    },
+  },
+});
+
 root.render(
   <Provider store={store}>
-    <ThemeProvider theme={theme}>
+    <ThemeProvider theme={darkTheme}>
       <CssBaseline />
       <App />
     </ThemeProvider>

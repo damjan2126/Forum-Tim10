@@ -16,9 +16,7 @@ export const getUser = createAsyncThunk(
   "/getUser",
   async ({ user_id }, thunkAPI) => {
     try {
-      const userData = await fetch.get(`/user/${user_id}`, {
-        mode: "cors",
-      });
+      const userData = await fetch.get(`/user/${user_id}`);
       return userData;
     } catch (error) {
       return thunkAPI.rejectWithValue(error.response?.data);
@@ -33,20 +31,14 @@ export const updateUser = createAsyncThunk(
     thunkAPI
   ) => {
     try {
-      const userData = await fetch.put(
-        `/user/${user_id}`,
-        {
-          lastName,
-          firstName,
-          country,
-          city,
-          address,
-          phoneNumber,
-        },
-        {
-          mode: "cors",
-        }
-      );
+      const userData = await fetch.put(`/user/${user_id}`, {
+        lastName,
+        firstName,
+        country,
+        city,
+        address,
+        phoneNumber,
+      });
       return userData;
     } catch (error) {
       return thunkAPI.rejectWithValue(error.response?.data);

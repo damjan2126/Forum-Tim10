@@ -5,6 +5,7 @@ import Home from "./pages/home";
 import Login from "./pages/login";
 import Profile from "./pages/profile";
 import Registration from "./pages/registration";
+import Theme from "./pages/theme";
 
 const App = () => {
   return (
@@ -13,6 +14,7 @@ const App = () => {
         <Route element={<PrivateRoutes />}>
           <Route path="/" element={<Home />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/:theme_name" element={<Theme />} />
         </Route>
         <Route element={<AuthRoutes />}>
           <Route path="/login" element={<Login />} />

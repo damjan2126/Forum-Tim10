@@ -10,20 +10,16 @@ const register = ({
   address,
   phoneNumber,
 }) => {
-  return fetch.post(
-    "/user/register",
-    {
-      password: password,
-      email,
-      lastName,
-      firstName,
-      country,
-      city,
-      address,
-      phoneNumber,
-    },
-    { mode: "cors" }
-  );
+  return fetch.post("/user/register", {
+    password: password,
+    email,
+    lastName,
+    firstName,
+    country,
+    city,
+    address,
+    phoneNumber,
+  });
 };
 
 const login = async ({ email, password }) => {
@@ -32,7 +28,6 @@ const login = async ({ email, password }) => {
     password: password,
   });
   if (response.data.access_token) {
-    console.log(response);
     localStorage.setItem(
       "accessToken",
       JSON.stringify(response.data.access_token)
@@ -49,13 +44,9 @@ const logout = async () => {
 };
 
 const changePassword = ({ user_id, password }) => {
-  return fetch.patch(
-    `/user/${user_id}`,
-    {
-      password,
-    },
-    { mode: "cors" }
-  );
+  return fetch.patch(`/user/${user_id}`, {
+    password,
+  });
 };
 
 const user = { register, login, logout, changePassword };

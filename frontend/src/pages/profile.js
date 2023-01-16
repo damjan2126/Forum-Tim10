@@ -1,7 +1,7 @@
 import React, { useState } from "react";
-import Header from "../components/Header";
-import PersonalInformation from "../components/PersonalInformation";
-import ChangePassword from "../components/ChnagePassword";
+import Header from "../components/layout/Header";
+import PersonalInformation from "../components/profile/PersonalInformation";
+import ChangePassword from "../components/profile/ChnagePassword";
 import { Box, Tab, Tabs, Typography } from "@mui/material";
 
 const TabPanel = (props) => {

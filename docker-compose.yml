@@ -26,6 +26,7 @@ services:
 
   api:
     build: .
+    image: forum-tim10-api
     container_name: api-container
     volumes:
       - .:/app
